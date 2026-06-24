@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>n次回マップ</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    #title {
+      position: absolute;
+      z-index: 1000;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+#controls {
+  position: absolute;
+  z-index: 1000;
+  top: 10px;
+  left: 10px;
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+#controls select {
+  font-size: 16px;
+  margin-left: 5px;
+}
+
+  </style>
+</head>
+<body>
+
+<div id="controls">
+
+  街:
+  <select id="sheetSelect">
+  </select>
+
+  評価:
+  <select id="scoreFilter">
+
+    <option value="0">
+      すべて
+    </option>
+
+    <option value="3.0">
+      3.0以上
+    </option>
+
+    <option value="3.3">
+      3.3以上
+    </option>
+
+    <option value="3.5">
+      3.5以上
+    </option>
+
+    <option value="3.7">
+      3.7以上
+    </option>
+
+  </select>
+
+  <label style="margin-left:10px;">
+    <input
+      type="checkbox"
+      id="openNowFilter"
+    >
+    営業中のみ
+  </label>
+
+</div>
+
+<div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+
+//----------------------------------
+// URLパラメータ取得
+//----------------------------------
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+let sheet =
+  params.get("sheet")
+  || "asagaya";
+
+const scoreFilter =
+  Number(
+    params.get("score")
+    || 0
+  );
+
+const openNowOnly =
+  params.get("openNow")
+  === "1";
+
+//----------------------------------
+// 地図初期化
+//----------------------------------
+
+const map =
+  L.map("map");
+
+L.tileLayer(
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    attribution:
+      "&copy; OpenStreetMap contributors"
+  }
+).addTo(map);
+
+
+// ←ここから追加
+
+const iconMap = {
+
+  sake:
+    L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    }),
+
+  seafood:
+    L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    }),
+
+  beer:
+    L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    }),
+
+  chinese:
+    L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    }),
+
+  yakitori:
+    L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    }),
+
+  default:
+    L.icon({
+      iconUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25,41],
+      iconAnchor: [12,41]
+    })
+
+};
+
+function getIcon(shop) {
+
+  const genre =
+    shop.genre || "";
+
+  if (genre.includes("日本酒")) {
+    return iconMap.sake;
+  }
+
+  if (genre.includes("海鮮")) {
+    return iconMap.seafood;
+  }
+
+  if (genre.includes("ビア")) {
+    return iconMap.beer;
+  }
+
+  if (
+    genre.includes("餃子") ||
+    genre.includes("中華")
+  ) {
+    return iconMap.chinese;
+  }
+
+  if (
+    genre.includes("焼き鳥") ||
+    genre.includes("串焼き")
+  ) {
+    return iconMap.yakitori;
+  }
+
+  return iconMap.default;
+
+}
+
+// 
+
+
+    //----------------------------------
+    // API
+    //----------------------------------
+
+const sheetApi =
+  "https://script.google.com/macros/s/AKfycbzdHCfjgsKxiAtVExTIynIAJf-Y0Nr2Nro9tnShlEJU62keeCql4AxZmo-f-0zOJySe/exec?mode=sheets";
+
+fetch(sheetApi)
+  .then(response => response.json())
+  .then(sheets => {
+
+    const select =
+      document.getElementById(
+        "sheetSelect"
+      );
+
+    sheets.forEach(name => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value = name;
+      option.textContent = name;
+
+      if (name === sheet) {
+        option.selected = true;
+      }
+
+      select.appendChild(option);
+
+    });
+
+    document.getElementById(
+      "scoreFilter"
+    ).value =
+      scoreFilter;
+
+    document.getElementById(
+      "openNowFilter"
+    ).checked =
+      openNowOnly;
+
+select.addEventListener(
+  "change",
+  function() {
+
+    location.href =
+      "?sheet="
+      + this.value
+      + "&score="
+      + document
+          .getElementById(
+            "scoreFilter"
+          )
+          .value
+      + "&openNow="
+      + (
+          document
+            .getElementById(
+              "openNowFilter"
+            )
+            .checked
+          ? 1
+          : 0
+        );
+
+  }
+);
+
+document
+  .getElementById(
+    "scoreFilter"
+  )
+  .addEventListener(
+    "change",
+    function() {
+
+      location.href =
+        "?sheet="
+        + sheet
+        + "&score="
+        + this.value
+        + "&openNow="
+        + (
+            document
+              .getElementById(
+                "openNowFilter"
+              )
+              .checked
+            ? 1
+            : 0
+          );
+
+    }
+  );
+
+document
+  .getElementById(
+    "openNowFilter"
+  )
+  .addEventListener(
+    "change",
+    function() {
+
+      location.href =
+        "?sheet="
+        + sheet
+        + "&score="
+        + document
+            .getElementById(
+              "scoreFilter"
+            )
+            .value
+        + "&openNow="
+        + (
+            this.checked
+            ? 1
+            : 0
+          );
+
+    }
+  );
+
+  });
+
+    const apiUrl =
+      "https://script.google.com/macros/s/AKfycbzdHCfjgsKxiAtVExTIynIAJf-Y0Nr2Nro9tnShlEJU62keeCql4AxZmo-f-0zOJySe/exec?sheet="
+      + sheet;
+
+    //----------------------------------
+    // 店舗取得
+    //----------------------------------
+
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(shops => {
+
+        console.log(shops);
+
+        const bounds = [];
+
+shops
+  .filter(shop => {
+
+    const score =
+      Number(
+        shop.score
+      );
+
+    if (
+      score <
+      scoreFilter
+    ) {
+      return false;
+    }
+
+    if (
+      openNowOnly
+    ) {
+
+      if (
+        !shop.open ||
+        !shop.close
+      ) {
+        return false;
+      }
+
+      const now =
+        new Date();
+
+      let nowMinutes =
+        now.getHours() * 60 +
+        now.getMinutes();
+
+      const [
+        openHour,
+        openMinute
+      ] =
+        shop.open
+          .split(":")
+          .map(Number);
+
+      const [
+        closeHour,
+        closeMinute
+      ] =
+        shop.close
+          .split(":")
+          .map(Number);
+
+      const openMinutes =
+        openHour * 60 +
+        openMinute;
+
+      let closeMinutes =
+        closeHour * 60 +
+        closeMinute;
+
+      // 17:00～02:00対応
+      if (
+        closeMinutes <
+        openMinutes
+      ) {
+
+        closeMinutes +=
+          24 * 60;
+
+        if (
+          nowMinutes <
+          openMinutes
+        ) {
+
+          nowMinutes +=
+            24 * 60;
+
+        }
+
+      }
+
+      if (
+        nowMinutes <
+          openMinutes ||
+        nowMinutes >
+          closeMinutes
+      ) {
+        return false;
+      }
+
+    }
+
+    return true;
+
+  })
+  .forEach(shop => {
+
+    if (!shop.lat || !shop.lng) {
+      return;
+    }
+
+    const lat = Number(shop.lat);
+    const lng = Number(shop.lng);
+
+    bounds.push([
+      lat,
+      lng
+    ]);
+
+L.marker(
+  [
+    lat,
+    lng
+  ],
+  {
+    icon:
+      getIcon(shop)
+  }
+)
+          .addTo(map)
+          .bindPopup(
+            `
+            <div style="min-width:250px">
+
+              <h3 style="margin:0 0 8px 0">
+                ${shop.name}
+              </h3>
+
+              <p>
+                ⭐ 評価:
+                ${shop.score || "-"}
+              </p>
+
+              <p>
+                🕒
+                ${shop.open || "-"}
+                ～
+                ${shop.close || "-"}
+              </p>
+
+              <p>
+                🍺
+                ${shop.genre || "-"}
+              </p>
+
+              <p>
+                📝
+                ${shop.memo || ""}
+              </p>
+
+              <p>
+                📍
+                ${shop.address || ""}
+              </p>
+
+              <p>
+                <a
+                  href="${shop.tabelog_url}"
+                  target="_blank"
+                >
+                  食べログを見る
+                </a>
+              </p>
+
+            </div>
+            `
+          );
+
+        });
+
+        if (bounds.length > 0) {
+
+          map.fitBounds(
+            bounds,
+            {
+              padding: [50, 50]
+            }
+          );
+
+        } else {
+
+          map.setView(
+            [35.681236, 139.767125],
+            12
+          );
+
+        }
+
+      })
+      .catch(error => {
+
+        console.error(error);
+
+        alert(
+          "データ取得に失敗しました"
+        );
+
+      });
+
+  </script>
+
+</body>
+</html>
