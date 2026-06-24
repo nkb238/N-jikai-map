@@ -94,6 +94,12 @@
     営業中のみ
   </label>
 
+営業時刻:
+<input
+  type="time"
+  id="timeFilter"
+/>
+
 </div>
 
 <div id="map"></div>
@@ -112,8 +118,15 @@ const params =
   );
 
 let sheet =
-  params.get("sheet")
-  || "asagaya";
+  params.get("sheet");
+
+console.log("sheet=", sheet);
+
+if (!sheet) {
+
+  sheet = "";
+
+}
 
 const scoreFilter =
   Number(
@@ -125,6 +138,10 @@ const openNowOnly =
   params.get("openNow")
   === "1";
 
+const timeFilter =
+  params.get("time")
+  || "";
+
 //----------------------------------
 // 地図初期化
 //----------------------------------
@@ -132,116 +149,184 @@ const openNowOnly =
 const map =
   L.map("map");
 
+L.control.scale().addTo(map);
+
 L.tileLayer(
-  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
   {
     attribution:
-      "&copy; OpenStreetMap contributors"
+      "&copy; OpenStreetMap contributors &copy; CARTO",
+    subdomains: "abcd",
+    maxZoom: 20
   }
 ).addTo(map);
 
+//----------------------------------
+// 現在地表示
+//----------------------------------
 
+if (navigator.geolocation) {
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      const lat =
+        position.coords.latitude;
+
+      const lng =
+        position.coords.longitude;
+
+      L.circle(
+        [lat, lng],
+        {
+          radius: 30,
+          color: "#0066ff",
+          fillColor: "#0066ff",
+          fillOpacity: 0.2
+        }
+      ).addTo(map);
+
+      L.circleMarker(
+        [lat, lng],
+        {
+          radius: 8,
+          color: "#0066ff",
+          fillColor: "#0066ff",
+          fillOpacity: 1
+        }
+      )
+      .addTo(map)
+      .bindPopup("現在地");
+
+    },
+
+    function(error) {
+
+      console.log(
+        "位置情報取得失敗",
+        error
+      );
+
+    }
+
+  );
+
+}
 // ←ここから追加
 
-const iconMap = {
+function createEmojiIcon(emoji) {
 
-  sake:
-    L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    }),
+  return L.divIcon({
 
-  seafood:
-    L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    }),
+    html:
+      `<div
+        style="
+          font-size:28px;
+          text-align:center;
+          line-height:30px;
+        "
+      >
+        ${emoji}
+      </div>`,
 
-  beer:
-    L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    }),
+    className: "",
 
-  chinese:
-    L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    }),
+    iconSize: [30, 30],
 
-  yakitori:
-    L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    }),
+    iconAnchor: [15, 30]
 
-  default:
-    L.icon({
-      iconUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25,41],
-      iconAnchor: [12,41]
-    })
+  });
 
-};
+}
 
 function getIcon(shop) {
 
   const genre =
     shop.genre || "";
 
-  if (genre.includes("日本酒")) {
-    return iconMap.sake;
+  if (
+    genre.includes("立ち飲み")
+  ) {
+    return createEmojiIcon("🏮");
   }
 
-  if (genre.includes("海鮮")) {
-    return iconMap.seafood;
+  if (
+    genre.includes("日本酒")
+  ) {
+    return createEmojiIcon("🍶");
   }
 
-  if (genre.includes("ビア")) {
-    return iconMap.beer;
+  if (
+    genre.includes("海鮮")
+  ) {
+    return createEmojiIcon("🐟");
+  }
+
+  if (
+    genre.includes("ビア")
+  ) {
+    return createEmojiIcon("🍺");
   }
 
   if (
     genre.includes("餃子") ||
     genre.includes("中華")
   ) {
-    return iconMap.chinese;
+    return createEmojiIcon("🥟");
   }
 
   if (
     genre.includes("焼き鳥") ||
     genre.includes("串焼き")
   ) {
-    return iconMap.yakitori;
+    return createEmojiIcon("🐔");
   }
 
-  return iconMap.default;
+  if (
+    genre.includes("タイ料理")
+  ) {
+    return createEmojiIcon("🇹🇭");
+  }
+
+  return createEmojiIcon("🍽️");
 
 }
+function isOpenAt(
+  shop,
+  targetTime
+) {
 
+  if (
+    !shop.open ||
+    !shop.close
+  ) {
+    return true;
+  }
+
+  const open =
+    shop.open;
+
+  const close =
+    shop.close;
+
+  if (
+    close < open
+  ) {
+
+    return (
+      targetTime >= open ||
+      targetTime <= close
+    );
+
+  }
+
+  return (
+    targetTime >= open &&
+    targetTime <= close
+  );
+
+}
 // 
 
 
@@ -255,6 +340,8 @@ const sheetApi =
 fetch(sheetApi)
   .then(response => response.json())
   .then(sheets => {
+
+
 
     const select =
       document.getElementById(
@@ -289,6 +376,11 @@ fetch(sheetApi)
     ).checked =
       openNowOnly;
 
+document.getElementById(
+  "timeFilter"
+).value =
+  timeFilter;
+
 select.addEventListener(
   "change",
   function() {
@@ -311,7 +403,13 @@ select.addEventListener(
             .checked
           ? 1
           : 0
-        );
+        )
+  + "&time="
+  + document
+      .getElementById(
+        "timeFilter"
+      )
+      .value;
 
   }
 );
@@ -324,9 +422,13 @@ document
     "change",
     function() {
 
-      location.href =
-        "?sheet="
-        + sheet
+location.href =
+  "?sheet="
+  + document
+      .getElementById(
+        "sheetSelect"
+      )
+      .value
         + "&score="
         + this.value
         + "&openNow="
@@ -338,10 +440,17 @@ document
               .checked
             ? 1
             : 0
-          );
+          )
+        + "&time="
+        + document
+            .getElementById(
+              "timeFilter"
+            )
+            .value;
 
     }
   );
+
 
 document
   .getElementById(
@@ -353,7 +462,11 @@ document
 
       location.href =
         "?sheet="
-        + sheet
+        + document
+            .getElementById(
+              "sheetSelect"
+            )
+            .value
         + "&score="
         + document
             .getElementById(
@@ -365,16 +478,61 @@ document
             this.checked
             ? 1
             : 0
-          );
+          )
+        + "&time="
+        + document
+            .getElementById(
+              "timeFilter"
+            )
+            .value;
 
     }
   );
+document
+  .getElementById(
+    "timeFilter"
+  )
+  .addEventListener(
+    "change",
+    function() {
 
+location.href =
+  "?sheet="
+  + document
+      .getElementById(
+        "sheetSelect"
+      )
+      .value
+        + "&score="
+        + document
+            .getElementById(
+              "scoreFilter"
+            )
+            .value
+        + "&openNow="
+        + (
+            document
+              .getElementById(
+                "openNowFilter"
+              )
+              .checked
+            ? 1
+            : 0
+          )
+        + "&time="
+        + this.value;
+
+    }
+  );
   });
 
     const apiUrl =
-      "https://script.google.com/macros/s/AKfycbzdHCfjgsKxiAtVExTIynIAJf-Y0Nr2Nro9tnShlEJU62keeCql4AxZmo-f-0zOJySe/exec?sheet="
-      + sheet;
+      "https://script.google.com/macros/s/AKfycbzdHCfjgsKxiAtVExTIynIAJf-Y0Nr2Nro9tnShlEJU62keeCql4AxZmo-f-0zOJySe/exec"
+      + (
+      sheet
+      ? "?sheet=" + sheet
+      : ""
+    );
 
     //----------------------------------
     // 店舗取得
@@ -477,6 +635,20 @@ shops
 
     }
 
+if (
+  timeFilter
+) {
+
+  if (
+    !isOpenAt(
+      shop,
+      timeFilter
+    )
+  ) {
+    return false;
+  }
+
+}
     return true;
 
   })
@@ -560,7 +732,7 @@ L.marker(
           map.fitBounds(
             bounds,
             {
-              padding: [50, 50]
+              padding: [80, 80]
             }
           );
 
