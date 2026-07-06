@@ -35,71 +35,284 @@
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
 
-#controls {
-  position: absolute;
-  z-index: 1000;
-  top: 10px;
-  left: 10px;
-  background: white;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    #filterPanel {
+
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      width: 320px;
+
+    }
+
+    #toggleFilter {
+
+      width: 100%;
+      padding: 12px;
+
+      font-size: 16px;
+      font-weight: bold;
+
+      background: white;
+      border: none;
+      border-radius: 10px;
+
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+
+      cursor: pointer;
+
+    }
+
+    #controls {
+
+      margin-top: 8px;
+
+      background: white;
+
+      padding: 12px;
+
+      border-radius: 10px;
+
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+
+    }
+
+    #controls select {
+      font-size: 16px;
+      margin-left: 5px;
+    }
+
+    .controlGroup{
+
+  margin-bottom:18px;
+
 }
 
-#controls select {
-  font-size: 16px;
-  margin-left: 5px;
+.controlGroup:last-child{
+
+  margin-bottom:0;
+
 }
+
+.groupTitle{
+
+  font-weight:bold;
+
+  margin-bottom:10px;
+
+  padding-bottom:4px;
+
+  border-bottom:1px solid #ddd;
+
+}
+
+.controlLabel{
+
+  display:block;
+
+  margin-bottom:4px;
+
+  font-size:14px;
+
+}
+
+#controls select,
+#controls input[type="time"]{
+
+  width:100%;
+
+  box-sizing:border-box;
+
+  margin-bottom:12px;
+
+  padding:8px;
+
+  font-size:16px;
+
+}
+
+.checkLabel{
+
+  display:block;
+
+  margin-bottom:8px;
+
+  font-size:15px;
+
+}
+
+    #summary {
+
+      margin-top: 8px;
+
+      background: white;
+
+      padding: 12px;
+
+      border-radius: 10px;
+
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+
+      line-height: 1.8;
+
+      font-size: 15px;
+
+    } 
+    
+    .summaryRow {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      padding: 4px 0;
+
+    }
+
+    .summaryRow span:last-child {
+
+      font-weight: bold;
+
+    }
 
   </style>
 </head>
 <body>
 
+  <div id="filterPanel">
+    <div id="filterCard">
+    <button id="toggleFilter">
+    ☰ フィルタ
+    </button>
+
+<div id="summary">
+
+  <div class="summaryRow">
+    <span>
+      🍺 表示中
+    </span>
+
+    <span id="visibleCount">
+      0件
+    </span>
+  </div>
+
+  <div class="summaryRow">
+    <span>
+      ❤️ お気に入り
+    </span>
+
+    <span id="favoriteCount">
+      0件
+    </span>
+  </div>
+
+  <div class="summaryRow">
+    <span>
+      ✅ 訪問済み
+    </span>
+
+    <span id="visitedCount">
+      0件
+    </span>
+  </div>
+
+</div>
+
 <div id="controls">
 
-  街:
-  <select id="sheetSelect">
-  </select>
+  <div class="controlGroup">
 
-  評価:
-  <select id="scoreFilter">
+    <div class="groupTitle">
+      🔍 検索条件
+    </div>
 
-    <option value="0">
-      すべて
-    </option>
+    <label class="controlLabel">
+      📍 街
+    </label>
 
-    <option value="3.0">
-      3.0以上
-    </option>
+    <select id="sheetSelect">
+    </select>
 
-    <option value="3.3">
-      3.3以上
-    </option>
+    <label class="controlLabel">
+      ⭐ 評価
+    </label>
 
-    <option value="3.5">
-      3.5以上
-    </option>
+    <select id="scoreFilter">
 
-    <option value="3.7">
-      3.7以上
-    </option>
+      <option value="0">すべて</option>
+      <option value="3.0">3.0以上</option>
+      <option value="3.3">3.3以上</option>
+      <option value="3.5">3.5以上</option>
+      <option value="3.7">3.7以上</option>
 
-  </select>
+    </select>
 
-  <label style="margin-left:10px;">
+  </div>
+
+  <div class="controlGroup">
+
+    <div class="groupTitle">
+      🕒 営業条件
+    </div>
+
+    <label class="controlLabel">
+      営業時刻
+    </label>
+
     <input
-      type="checkbox"
-      id="openNowFilter"
+      type="time"
+      id="timeFilter"
     >
-    営業中のみ
-  </label>
 
-営業時刻:
-<input
-  type="time"
-  id="timeFilter"
-/>
+    <label class="checkLabel">
 
+      <input
+        type="checkbox"
+        id="openNowFilter"
+      >
+
+      営業中のみ
+
+    </label>
+
+  </div>
+
+  <div class="controlGroup">
+
+    <div class="groupTitle">
+      📚 マイリスト
+    </div>
+
+    <label class="checkLabel">
+
+      <input
+        type="checkbox"
+        id="favoriteOnlyFilter"
+      >
+
+      お気に入りのみ
+
+    </label>
+
+    <label class="checkLabel">
+
+      <input
+        type="checkbox"
+        id="unvisitedOnlyFilter"
+      >
+
+      未訪問のみ
+
+    </label>
+
+  </div>
+
+</div>
+  </div>
+  </div>
 </div>
 
 <div id="map"></div>
@@ -138,6 +351,14 @@ const openNowOnly =
   params.get("openNow")
   === "1";
 
+const favoriteOnly =
+  params.get("favoriteOnly")
+  === "1";
+
+const unvisitedOnly =
+  params.get("unvisitedOnly")
+  === "1";
+
 const timeFilter =
   params.get("time")
   || "";
@@ -148,6 +369,8 @@ const timeFilter =
 
 const map =
   L.map("map");
+
+const markers = {};
 
 L.control.scale().addTo(map);
 
@@ -215,26 +438,103 @@ if (navigator.geolocation) {
 }
 // ←ここから追加
 
-function createEmojiIcon(emoji) {
+function createEmojiIcon(
+  emoji,
+  favorite = false,
+  visited = false
+) {
 
   return L.divIcon({
 
-    html:
-      `<div
-        style="
-          font-size:28px;
-          text-align:center;
-          line-height:30px;
-        "
-      >
-        ${emoji}
-      </div>`,
-
     className: "",
 
-    iconSize: [30, 30],
+    html: `
+      <div
+        style="
+          position:relative;
+          width:36px;
+          height:36px;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+        "
+      >
 
-    iconAnchor: [15, 30]
+      <div
+        style="
+          position:absolute;
+          top:-2px;
+          left:-2px;
+          display:flex;
+          gap:2px;
+        "
+      >
+
+        ${
+          favorite
+            ? `
+            <div
+              style="
+                width:14px;
+                height:14px;
+                border-radius:50%;
+                background:#FFD700;
+                color:white;
+                font-size:10px;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                box-shadow:0 0 2px rgba(0,0,0,.5);
+              "
+            >
+              ★
+            </div>
+            `
+            : ""
+        }
+
+        ${
+          visited
+            ? `
+            <div
+              style="
+                width:14px;
+                height:14px;
+                border-radius:50%;
+                background:#4CAF50;
+                color:white;
+                font-size:10px;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                box-shadow:0 0 2px rgba(0,0,0,.5);
+              "
+            >
+              ✓
+            </div>
+            `
+            : ""
+        }
+
+      </div>
+
+        <div
+          style="
+            font-size:28px;
+            line-height:28px;
+          "
+        >
+          ${emoji}
+        </div>
+
+      </div>
+    `,
+
+    iconSize: [36,36],
+
+    iconAnchor: [18,36],
+
+    popupAnchor: [0,-30]
 
   });
 
@@ -242,56 +542,331 @@ function createEmojiIcon(emoji) {
 
 function getIcon(shop) {
 
+  const favorite = isFavorite(shop);
+  const visited =  isVisited(shop);
   const genre =
     shop.genre || "";
 
   if (
     genre.includes("立ち飲み")
   ) {
-    return createEmojiIcon("🏮");
+    return createEmojiIcon("🏮",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("日本酒")
   ) {
-    return createEmojiIcon("🍶");
+    return createEmojiIcon("🍶",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("海鮮")
   ) {
-    return createEmojiIcon("🐟");
+    return createEmojiIcon("🐟",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("ビア")
   ) {
-    return createEmojiIcon("🍺");
+    return createEmojiIcon("🍺",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("餃子") ||
     genre.includes("中華")
   ) {
-    return createEmojiIcon("🥟");
+    return createEmojiIcon("🥟",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("焼き鳥") ||
     genre.includes("串焼き")
   ) {
-    return createEmojiIcon("🐔");
+    return createEmojiIcon("🐔",
+  favorite,
+  visited);
   }
 
   if (
     genre.includes("タイ料理")
   ) {
-    return createEmojiIcon("🇹🇭");
+    return createEmojiIcon("🇹🇭",
+  favorite,
+  visited);
   }
 
-  return createEmojiIcon("🍽️");
+  return createEmojiIcon("🍽️",
+  favorite,
+  visited);
 
 }
+
+function createPopup(shop) {
+
+  return `
+    <div style="min-width:250px">
+
+      <h3 style="margin:0 0 8px 0">
+        ${shop.name}
+      </h3>
+
+      <p>
+        ⭐ 評価:
+        ${shop.score || "-"}
+      </p>
+
+      <p>
+        🕒
+        ${shop.open || "-"}
+        ～
+        ${shop.close || "-"}
+      </p>
+
+      <p>
+        🍺
+        ${shop.genre || "-"}
+      </p>
+
+      ${
+        shop.seats
+          ? `
+            <p>
+              🪑
+              ${shop.seats}席
+            </p>
+          `
+          : ""
+      }
+
+      <p>
+        📝
+        ${shop.memo || ""}
+      </p>
+
+      <p>
+        📍
+        ${shop.address || ""}
+      </p>
+
+      <p>
+
+        <a
+          href="${shop.tabelog_url}"
+          target="_blank"
+        >
+          食べログを見る
+        </a>
+
+      </p>
+
+      <p>
+
+        <a
+          href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.name + ' ' + shop.address)}"
+          target="_blank"
+        >
+          Google Mapsで開く
+        </a>
+
+      </p>
+
+      <p>
+
+        <button
+          onclick="toggleFavorite('${shop.id}', this)"
+        >
+          ${
+            isFavorite(shop)
+              ? "★お気に入り解除"
+              : "☆お気に入り登録"
+          }
+        </button>
+
+      </p>
+
+      <p>
+
+      <button
+        onclick="
+          toggleVisited('${shop.id}', this)
+        "
+      >
+
+      ${
+        isVisited(shop)
+          ? "☑ 訪問済み解除"
+          : "☐ 訪問済みにする"
+      }
+
+      </button>
+
+      </p>
+
+    </div>
+  `;
+
+}
+
+//----------------------------------
+// お気に入り管理
+//----------------------------------
+
+let favorites =
+  JSON.parse(
+    localStorage.getItem("favorites")
+    || "[]"
+  );
+
+let visited =
+  JSON.parse(
+    localStorage.getItem("visited")
+    || "[]"
+  );
+
+function isVisited(shop) {
+
+  return visited.includes(
+    String(shop.id)
+  );
+
+}
+
+function isFavorite(shop) {
+
+  return favorites.includes(
+    String(shop.id)
+  );
+
+}
+
+function toggleFavorite(
+  shopId,
+  button
+) {
+
+  shopId =
+    String(shopId);
+
+  if (
+    favorites.includes(shopId)
+  ) {
+
+    favorites =
+      favorites.filter(
+        id => id !== shopId
+      );
+
+  } else {
+
+    favorites.push(shopId);
+
+  }
+
+  localStorage.setItem(
+    "favorites",
+    JSON.stringify(
+      favorites
+    )
+  );
+
+  const shop =
+    window.allShops.find(
+      s =>
+        String(s.id)
+        === shopId
+    );
+
+  if (
+    shop &&
+    markers[shopId]
+  ) {
+
+    markers[shopId]
+      .setIcon(
+        getIcon(shop)
+      );
+
+    markers[shopId]
+      .setPopupContent(
+        createPopup(shop)
+      );
+
+    updateSummary();
+
+  }
+
+}
+
+function toggleVisited(
+  shopId,
+  button
+) {
+
+  shopId = String(shopId);
+
+  if (
+    visited.includes(shopId)
+  ) {
+
+    visited =
+      visited.filter(
+        id => id !== shopId
+      );
+
+
+  } else {
+
+    visited.push(shopId);
+
+
+
+  }
+
+  localStorage.setItem(
+    "visited",
+    JSON.stringify(
+      visited
+    )
+  );
+
+  const shop =
+    window.allShops.find(
+      s =>
+        String(s.id)
+        === shopId
+    );
+
+  if (
+    shop &&
+    markers[shopId]
+  ) {
+
+    markers[shopId]
+      .setIcon(
+        getIcon(shop)
+      );
+    
+    markers[shopId]
+      .setPopupContent(
+        createPopup(shop)
+    );
+
+    updateSummary();
+
+  }
+
+}
+
 function isOpenAt(
   shop,
   targetTime
@@ -328,11 +903,76 @@ function isOpenAt(
 
 }
 // 
+function updateSummary() {
 
+  // 🍺表示中
+  document.getElementById(
+    "visibleCount"
+  ).textContent =
+    Object.keys(markers).length + "件";
 
+  // ❤️お気に入り
+  document.getElementById(
+    "favoriteCount"
+  ).textContent =
+    favorites.length + "件";
+
+  // ✅訪問済み
+  document.getElementById(
+    "visitedCount"
+  ).textContent =
+    visited.length + "件";
+
+}
+
+//----------------------------------
+// フィルタ初期化
+//----------------------------------
+
+function initFilter() {
+
+  const controls =
+    document.getElementById(
+      "controls"
+    );
+
+  const toggleButton =
+    document.getElementById(
+      "toggleFilter"
+    );
+
+  controls.style.display = "none";
+
+  toggleButton.textContent =
+    "☰ フィルタ ▼";
+
+  let filterOpen = false;
+
+  toggleButton.addEventListener(
+    "click",
+    function () {
+
+      filterOpen =
+        !filterOpen;
+
+      controls.style.display =
+        filterOpen
+          ? "block"
+          : "none";
+
+      toggleButton.textContent =
+        filterOpen
+          ? "☰ フィルタ ▲"
+          : "☰ フィルタ ▼";
+
+    }
+  );
+
+}
     //----------------------------------
     // API
     //----------------------------------
+initFilter();
 
 const sheetApi =
   "https://script.google.com/macros/s/AKfycbzdHCfjgsKxiAtVExTIynIAJf-Y0Nr2Nro9tnShlEJU62keeCql4AxZmo-f-0zOJySe/exec?mode=sheets";
@@ -376,42 +1016,78 @@ fetch(sheetApi)
     ).checked =
       openNowOnly;
 
-document.getElementById(
-  "timeFilter"
-).value =
-  timeFilter;
+    document.getElementById(
+      "favoriteOnlyFilter"
+    ).checked =
+      favoriteOnly;
+
+    document.getElementById(
+      "unvisitedOnlyFilter"
+    ).checked =
+      unvisitedOnly;
+
+    document.getElementById(
+      "timeFilter"
+    ).value =
+      timeFilter;
+
+function updateUrl() {
+
+  location.href =
+    "?sheet="
+    + document
+        .getElementById(
+          "sheetSelect"
+        )
+        .value
+    + "&score="
+    + document
+        .getElementById(
+          "scoreFilter"
+        )
+        .value
+    + "&openNow="
+    + (
+        document
+          .getElementById(
+            "openNowFilter"
+          )
+          .checked
+        ? 1
+        : 0
+      )
+    + "&time="
+    + document
+        .getElementById(
+          "timeFilter"
+        )
+        .value
+    + "&favoriteOnly="
+    + (
+        document
+          .getElementById(
+            "favoriteOnlyFilter"
+          )
+          .checked
+        ? 1
+        : 0
+      )
+    + "&unvisitedOnly="
+    + (
+        document
+          .getElementById(
+            "unvisitedOnlyFilter"
+          )
+          .checked
+        ? 1
+        : 0
+      );
+
+}
 
 select.addEventListener(
   "change",
-  function() {
-
-    location.href =
-      "?sheet="
-      + this.value
-      + "&score="
-      + document
-          .getElementById(
-            "scoreFilter"
-          )
-          .value
-      + "&openNow="
-      + (
-          document
-            .getElementById(
-              "openNowFilter"
-            )
-            .checked
-          ? 1
-          : 0
-        )
-  + "&time="
-  + document
-      .getElementById(
-        "timeFilter"
-      )
-      .value;
-
-  }
+  updateUrl
 );
 
 document
@@ -420,35 +1096,7 @@ document
   )
   .addEventListener(
     "change",
-    function() {
-
-location.href =
-  "?sheet="
-  + document
-      .getElementById(
-        "sheetSelect"
-      )
-      .value
-        + "&score="
-        + this.value
-        + "&openNow="
-        + (
-            document
-              .getElementById(
-                "openNowFilter"
-              )
-              .checked
-            ? 1
-            : 0
-          )
-        + "&time="
-        + document
-            .getElementById(
-              "timeFilter"
-            )
-            .value;
-
-    }
+    updateUrl
   );
 
 
@@ -458,72 +1106,37 @@ document
   )
   .addEventListener(
     "change",
-    function() {
-
-      location.href =
-        "?sheet="
-        + document
-            .getElementById(
-              "sheetSelect"
-            )
-            .value
-        + "&score="
-        + document
-            .getElementById(
-              "scoreFilter"
-            )
-            .value
-        + "&openNow="
-        + (
-            this.checked
-            ? 1
-            : 0
-          )
-        + "&time="
-        + document
-            .getElementById(
-              "timeFilter"
-            )
-            .value;
-
-    }
+    updateUrl
   );
+
+
 document
   .getElementById(
     "timeFilter"
   )
   .addEventListener(
     "change",
-    function() {
-
-location.href =
-  "?sheet="
-  + document
-      .getElementById(
-        "sheetSelect"
-      )
-      .value
-        + "&score="
-        + document
-            .getElementById(
-              "scoreFilter"
-            )
-            .value
-        + "&openNow="
-        + (
-            document
-              .getElementById(
-                "openNowFilter"
-              )
-              .checked
-            ? 1
-            : 0
-          )
-        + "&time="
-        + this.value;
-
-    }
+    updateUrl
   );
+
+document
+  .getElementById(
+    "favoriteOnlyFilter"
+  )
+  .addEventListener(
+    "change",
+    updateUrl
+  );
+
+document
+  .getElementById(
+    "unvisitedOnlyFilter"
+  )
+  .addEventListener(
+    "change",
+    updateUrl
+  );
+
   });
 
     const apiUrl =
@@ -541,6 +1154,9 @@ location.href =
     fetch(apiUrl)
       .then(response => response.json())
       .then(shops => {
+
+        window.allShops =
+          shops;
 
         console.log(shops);
 
@@ -560,6 +1176,20 @@ shops
     ) {
       return false;
     }
+
+    if (
+  favoriteOnly &&
+  !isFavorite(shop)
+) {
+  return false;
+}
+
+if (
+  unvisitedOnly &&
+  isVisited(shop)
+) {
+  return false;
+}
 
     if (
       openNowOnly
@@ -666,64 +1296,25 @@ if (
       lng
     ]);
 
-L.marker(
-  [
-    lat,
-    lng
-  ],
-  {
-    icon:
-      getIcon(shop)
-  }
-)
-          .addTo(map)
-          .bindPopup(
-            `
-            <div style="min-width:250px">
+const marker =
+  L.marker(
+    [
+      lat,
+      lng
+    ],
+    {
+      icon:
+        getIcon(shop)
+    }
+  )
+  .addTo(map)
+  .bindPopup(
+    createPopup(shop)
+  );
 
-              <h3 style="margin:0 0 8px 0">
-                ${shop.name}
-              </h3>
-
-              <p>
-                ⭐ 評価:
-                ${shop.score || "-"}
-              </p>
-
-              <p>
-                🕒
-                ${shop.open || "-"}
-                ～
-                ${shop.close || "-"}
-              </p>
-
-              <p>
-                🍺
-                ${shop.genre || "-"}
-              </p>
-
-              <p>
-                📝
-                ${shop.memo || ""}
-              </p>
-
-              <p>
-                📍
-                ${shop.address || ""}
-              </p>
-
-              <p>
-                <a
-                  href="${shop.tabelog_url}"
-                  target="_blank"
-                >
-                  食べログを見る
-                </a>
-              </p>
-
-            </div>
-            `
-          );
+markers[
+  String(shop.id)
+] = marker;
 
         });
 
@@ -744,6 +1335,8 @@ L.marker(
           );
 
         }
+        
+        updateSummary();
 
       })
       .catch(error => {
