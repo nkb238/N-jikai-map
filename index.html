@@ -182,7 +182,7 @@
 <body>
 
   <div id="filterPanel">
-    <div id="filterCard">
+    <div id="filterCard" class="filterCard">
     <button id="toggleFilter">
     ☰ フィルタ
     </button>
@@ -931,43 +931,50 @@ function updateSummary() {
 
 function initFilter() {
 
+  const panel =
+    document.getElementById("filterPanel");
+
+  const card =
+    document.getElementById("filterCard");
+
+  const summary =
+    document.getElementById("summary");
+
   const controls =
-    document.getElementById(
-      "controls"
-    );
+    document.getElementById("controls");
 
   const toggleButton =
-    document.getElementById(
-      "toggleFilter"
-    );
-
-  controls.style.display = "none";
-
-  toggleButton.textContent =
-    "☰ フィルタ ▼";
+    document.getElementById("toggleFilter");
 
   let filterOpen = false;
 
-  toggleButton.addEventListener(
-    "click",
-    function () {
+  // 初期状態：summary + controlsを非表示
+  summary.style.display = "none";
+  controls.style.display = "none";
 
-      filterOpen =
-        !filterOpen;
+  toggleButton.textContent = "☰ フィルタ ▼";
 
-      controls.style.display =
-        filterOpen
-          ? "block"
-          : "none";
+  toggleButton.addEventListener("click", function () {
 
-      toggleButton.textContent =
-        filterOpen
-          ? "☰ フィルタ ▲"
-          : "☰ フィルタ ▼";
+    filterOpen = !filterOpen;
+
+    if (filterOpen) {
+
+      summary.style.display = "block";
+      controls.style.display = "block";
+
+      toggleButton.textContent = "☰ フィルタ ▲";
+
+    } else {
+
+      summary.style.display = "none";
+      controls.style.display = "none";
+
+      toggleButton.textContent = "☰ フィルタ ▼";
 
     }
-  );
 
+  });
 }
     //----------------------------------
     // API
