@@ -41,7 +41,7 @@
       top: 10px;
       left: 10px;
       z-index: 1000;
-      width:min(320px, calc(100vw - 24px));
+      width:min(240px, calc(100vw - 24px));
 
     }
 
@@ -579,7 +579,7 @@ function getIcon(shop) {
   const visited =  isVisited(shop);
 
   const showLabel =
-  map.getZoom() >= 16;
+  map.getZoom() >= 18;
 
   const genre =
     shop.genre || "";
