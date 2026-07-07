@@ -180,6 +180,7 @@
 
     }
 
+
   </style>
 </head>
 <body>
@@ -314,9 +315,9 @@
   </div>
 
 </div>
+    </div>
   </div>
-  </div>
-</div>
+
 
 <div id="map"></div>
 
@@ -378,7 +379,7 @@ const markers = {};
 L.control.scale().addTo(map);
 
 L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   {
     attribution:
       "&copy; OpenStreetMap contributors &copy; CARTO",
@@ -453,97 +454,110 @@ function createEmojiIcon(
 
     className: "",
 
-    html: `
-      <div
-        style="
-          position:relative;
-          width:36px;
-          height:36px;
-          display:flex;
-          justify-content:center;
-          align-items:center;
-        "
-      >
-
-      <div
-        style="
-          position:absolute;
-          top:-2px;
-          left:-2px;
-          display:flex;
-          gap:2px;
-        "
-      >
-
-        ${
-          favorite
-            ? `
-            <div
-              style="
-                width:14px;
-                height:14px;
-                border-radius:50%;
-                background:#FFD700;
-                color:white;
-                font-size:10px;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                box-shadow:0 0 2px rgba(0,0,0,.5);
-              "
-            >
-              ★
-            </div>
-            `
-            : ""
-        }
-
-        ${
-          visited
-            ? `
-            <div
-              style="
-                width:14px;
-                height:14px;
-                border-radius:50%;
-                background:#4CAF50;
-                color:white;
-                font-size:10px;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                box-shadow:0 0 2px rgba(0,0,0,.5);
-              "
-            >
-              ✓
-            </div>
-            `
-            : ""
-        }
-
-      </div>
-
-  <div
+html: `
+<div
   style="
     display:flex;
     flex-direction:column;
-    align-items:center;
+    align-items:flex-start;
   "
 >
+
+  <div
+    style="
+      position:relative;
+      width:36px;
+      height:36px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    "
+  >
+
+    <div
+      style="
+        position:absolute;
+        top:-6px;
+        right:-6px;
+        display:flex;
+        flex-direction:column;
+        gap:1px;
+        align-items:center;
+        z-index:100;
+      "
+    >
+
+      ${
+        favorite
+          ? `
+          <div
+            style="
+              width:14px;
+              height:14px;
+              border-radius:50%;
+              background:#FFD700;
+              color:white;
+              font-size:10px;
+              display:flex;
+              justify-content:center;
+              align-items:center;
+              box-shadow:0 0 2px rgba(0,0,0,.5);
+            "
+          >
+            ★
+          </div>
+          `
+          : ""
+      }
+
+      ${
+        visited
+          ? `
+          <div
+            style="
+              width:14px;
+              height:14px;
+              border-radius:50%;
+              background:#4CAF50;
+              color:white;
+              font-size:10px;
+              display:flex;
+              justify-content:center;
+              align-items:center;
+              box-shadow:0 0 2px rgba(0,0,0,.5);
+            "
+          >
+            ✓
+          </div>
+          `
+          : ""
+      }
+
+    </div>
+
+    <div
+      style="
+        font-size:28px;
+        line-height:28px;
+      "
+    >
+      ${emoji}
+    </div>
+
+  </div>
 
   ${
     showLabel
       ? `
       <div
         style="
+          margin-top:2px;
           white-space:nowrap;
           font-size:12px;
-          font-weight:bold;
-          color:#222;
+          font-weight:600;
+          color:#444;
           text-shadow:
-            1px 1px 2px white,
-           -1px -1px 2px white;
-          margin-bottom:2px;
+          0 1px 2px rgba(255,255,255,.9);
         "
       >
         ${label}
@@ -552,23 +566,14 @@ function createEmojiIcon(
       : ""
   }
 
-  <div
-    style="
-      font-size:28px;
-      line-height:28px;
-    "
-  >
-    ${emoji}
-  </div>
-
 </div>
-    `,
+`,
 
     iconSize: [36,36],
 
-    iconAnchor: [18,44],
+    iconAnchor: [18,18],
 
-    popupAnchor: [0,-44]
+    popupAnchor: [0,-18]
 
   });
 
@@ -1384,6 +1389,8 @@ const marker =
     createPopup(shop)
   );
 
+
+
 marker.on("click", () => {
 
   if(window.closeFilter){
@@ -1431,30 +1438,25 @@ markers[
 
           window.allShops.forEach(shop => {
 
-            const marker =
-              markers[String(shop.id)];
+            const marker = markers[String(shop.id)];
 
-            if (marker) {
+            if (!marker) return;
 
-              marker.setIcon(
-                getIcon(shop)
-              );
-
-            }
+            marker.setIcon(getIcon(shop));
 
           });
 
+        });   // ← map.on終了
+
+        })     // ← ★ then(shops=>{ の終了
+
+        .catch(error => {
+
+          console.error(error);
+
+          alert("データ取得に失敗しました");
+
         });
-      })
-      .catch(error => {
-
-        console.error(error);
-
-        alert(
-          "データ取得に失敗しました"
-        );
-
-      });
 
   </script>
 
