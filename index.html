@@ -41,7 +41,7 @@
       top: 10px;
       left: 10px;
       z-index: 1000;
-      width: 320px;
+      width:min(320px, calc(100vw - 24px));
 
     }
 
@@ -75,6 +75,9 @@
 
       box-shadow: 0 2px 8px rgba(0,0,0,.2);
 
+      max-height:45vh;
+
+      overflow-y:auto;
     }
 
     #controls select {
@@ -441,7 +444,9 @@ if (navigator.geolocation) {
 function createEmojiIcon(
   emoji,
   favorite = false,
-  visited = false
+  visited = false,
+  label = "",
+  showLabel = false
 ) {
 
   return L.divIcon({
@@ -518,6 +523,14 @@ function createEmojiIcon(
 
       </div>
 
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          gap:4px;
+        "
+      >
+
         <div
           style="
             font-size:28px;
@@ -526,6 +539,26 @@ function createEmojiIcon(
         >
           ${emoji}
         </div>
+
+        ${
+          showLabel
+            ? `
+            <div
+              style="
+                white-space:nowrap;
+                font-size:13px;
+                font-weight:bold;
+                color:#222;
+                text-shadow:
+                  1px 1px 2px white,
+                -1px -1px 2px white;
+              "
+            >
+              ${label}
+            </div>
+            `
+            : ""
+        }
 
       </div>
     `,
@@ -544,6 +577,10 @@ function getIcon(shop) {
 
   const favorite = isFavorite(shop);
   const visited =  isVisited(shop);
+
+  const showLabel =
+  map.getZoom() >= 16;
+
   const genre =
     shop.genre || "";
 
@@ -552,7 +589,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🏮",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -560,7 +599,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🍶",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -568,7 +609,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🐟",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -576,7 +619,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🍺",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -585,7 +630,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🥟",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -594,7 +641,9 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🐔",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   if (
@@ -602,12 +651,16 @@ function getIcon(shop) {
   ) {
     return createEmojiIcon("🇹🇭",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
   }
 
   return createEmojiIcon("🍽️",
   favorite,
-  visited);
+  visited,
+  shop.name,
+  showLabel);
 
 }
 
@@ -1344,7 +1397,32 @@ markers[
         }
         
         updateSummary();
+        //----------------------------------
+        // ズーム変更時に店名表示切替
+        //----------------------------------
 
+        map.on("zoomend", () => {
+
+          if (!window.allShops) {
+            return;
+          }
+
+          window.allShops.forEach(shop => {
+
+            const marker =
+              markers[String(shop.id)];
+
+            if (marker) {
+
+              marker.setIcon(
+                getIcon(shop)
+              );
+
+            }
+
+          });
+
+        });
       })
       .catch(error => {
 
