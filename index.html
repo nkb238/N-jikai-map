@@ -41,7 +41,7 @@
       top: 10px;
       left: 10px;
       z-index: 1000;
-      width: 320px;
+      width:min(240px, calc(100vw - 24px));
 
     }
 
@@ -75,6 +75,9 @@
 
       box-shadow: 0 2px 8px rgba(0,0,0,.2);
 
+      max-height:45vh;
+
+      overflow-y:auto;
     }
 
     #controls select {
@@ -177,12 +180,13 @@
 
     }
 
+
   </style>
 </head>
 <body>
 
   <div id="filterPanel">
-    <div id="filterCard">
+    <div id="filterCard" class="filterCard">
     <button id="toggleFilter">
     ☰ フィルタ
     </button>
@@ -311,9 +315,9 @@
   </div>
 
 </div>
+    </div>
   </div>
-  </div>
-</div>
+
 
 <div id="map"></div>
 
@@ -334,6 +338,9 @@ let sheet =
   params.get("sheet");
 
 console.log("sheet=", sheet);
+
+const FAVORITE_KEY = `favorites_${sheet || "default"}`;
+const VISITED_KEY  = `visited_${sheet || "default"}`;
 
 if (!sheet) {
 
@@ -438,103 +445,186 @@ if (navigator.geolocation) {
 }
 // ←ここから追加
 
+const ICON_RULES = [
+
+  { keywords: ["立ち飲み"], emoji: "🏮" },
+
+  { keywords: ["日本酒"], emoji: "🍶" },
+
+  { keywords: ["海鮮"], emoji: "🐟" },
+
+  { keywords: ["ビア"], emoji: "🍺" },
+
+  { keywords: ["焼き鳥", "からあげ"], emoji: "🐔" },
+
+  { keywords: ["串焼き"], emoji: "🍢" },
+
+  { keywords: ["餃子"], emoji: "🥟" },
+
+  { keywords: ["中華"], emoji: "🥡" },
+
+  { keywords: ["ラーメン", "つけ麺"], emoji: "🍜" },
+
+  { keywords: ["カレー"], emoji: "🍛" },
+
+  { keywords: ["パン"], emoji: "🍞" },
+
+  { keywords: ["スイーツ", "ケーキ"], emoji: "🍰" },
+
+  { keywords: ["とんかつ"], emoji: "🐷" },
+
+  { keywords: ["タイ料理"], emoji: "🇹🇭" },
+
+  { keywords: ["寿司"], emoji: "🍣" },
+
+  { keywords: ["焼肉"], emoji: "🥩" },
+
+  { keywords: ["イタリアン"], emoji: "🍝" },
+
+  { keywords: ["フレンチ"], emoji: "🇫🇷" },
+
+  { keywords: ["韓国"], emoji: "🇰🇷" },
+
+  { keywords: ["インド"], emoji: "🇮🇳" },
+
+  { keywords: ["カフェ"], emoji: "☕" },
+
+  { keywords: ["喫茶"], emoji: "🫖" }
+
+];
+
 function createEmojiIcon(
   emoji,
   favorite = false,
-  visited = false
+  visited = false,
+  label = "",
+  showLabel = false
 ) {
 
   return L.divIcon({
 
     className: "",
 
-    html: `
+html: `
+<div
+  style="
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+  "
+>
+
+  <div
+    style="
+      position:relative;
+      width:36px;
+      height:36px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    "
+  >
+
+    <div
+      style="
+        position:absolute;
+        top:-6px;
+        right:-6px;
+        display:flex;
+        flex-direction:column;
+        gap:1px;
+        align-items:center;
+        z-index:100;
+      "
+    >
+
+      ${
+        favorite
+          ? `
+          <div
+            style="
+              width:14px;
+              height:14px;
+              border-radius:50%;
+              background:#FFD700;
+              color:white;
+              font-size:10px;
+              display:flex;
+              justify-content:center;
+              align-items:center;
+              box-shadow:0 0 2px rgba(0,0,0,.5);
+            "
+          >
+            ★
+          </div>
+          `
+          : ""
+      }
+
+      ${
+        visited
+          ? `
+          <div
+            style="
+              width:14px;
+              height:14px;
+              border-radius:50%;
+              background:#4CAF50;
+              color:white;
+              font-size:10px;
+              display:flex;
+              justify-content:center;
+              align-items:center;
+              box-shadow:0 0 2px rgba(0,0,0,.5);
+            "
+          >
+            ✓
+          </div>
+          `
+          : ""
+      }
+
+    </div>
+
+    <div
+      style="
+        font-size:28px;
+        line-height:28px;
+      "
+    >
+      ${emoji}
+    </div>
+
+  </div>
+
+  ${
+    showLabel
+      ? `
       <div
         style="
-          position:relative;
-          width:36px;
-          height:36px;
-          display:flex;
-          justify-content:center;
-          align-items:center;
+          margin-top:2px;
+          white-space:nowrap;
+          font-size:12px;
+          font-weight:600;
+          color:#444;
+          text-shadow:
+          0 1px 2px rgba(255,255,255,.9);
         "
       >
-
-      <div
-        style="
-          position:absolute;
-          top:-2px;
-          left:-2px;
-          display:flex;
-          gap:2px;
-        "
-      >
-
-        ${
-          favorite
-            ? `
-            <div
-              style="
-                width:14px;
-                height:14px;
-                border-radius:50%;
-                background:#FFD700;
-                color:white;
-                font-size:10px;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                box-shadow:0 0 2px rgba(0,0,0,.5);
-              "
-            >
-              ★
-            </div>
-            `
-            : ""
-        }
-
-        ${
-          visited
-            ? `
-            <div
-              style="
-                width:14px;
-                height:14px;
-                border-radius:50%;
-                background:#4CAF50;
-                color:white;
-                font-size:10px;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                box-shadow:0 0 2px rgba(0,0,0,.5);
-              "
-            >
-              ✓
-            </div>
-            `
-            : ""
-        }
-
+        ${label}
       </div>
+      `
+      : ""
+  }
 
-        <div
-          style="
-            font-size:28px;
-            line-height:28px;
-          "
-        >
-          ${emoji}
-        </div>
-
-      </div>
-    `,
+</div>
+`,
 
     iconSize: [36,36],
 
-    iconAnchor: [18,36],
+    iconAnchor: [18,18],
 
-    popupAnchor: [0,-30]
+    popupAnchor: [0,-18]
 
   });
 
@@ -543,71 +633,41 @@ function createEmojiIcon(
 function getIcon(shop) {
 
   const favorite = isFavorite(shop);
-  const visited =  isVisited(shop);
+  const visited = isVisited(shop);
+
+  const showLabel =
+    map.getZoom() >= 17;
+
   const genre =
     shop.genre || "";
 
-  if (
-    genre.includes("立ち飲み")
-  ) {
-    return createEmojiIcon("🏮",
-  favorite,
-  visited);
+  for (const rule of ICON_RULES) {
+
+    if (
+      rule.keywords.some(keyword =>
+        genre.includes(keyword)
+      )
+    ) {
+
+      return createEmojiIcon(
+        rule.emoji,
+        favorite,
+        visited,
+        shop.name,
+        showLabel
+      );
+
+    }
+
   }
 
-  if (
-    genre.includes("日本酒")
-  ) {
-    return createEmojiIcon("🍶",
-  favorite,
-  visited);
-  }
-
-  if (
-    genre.includes("海鮮")
-  ) {
-    return createEmojiIcon("🐟",
-  favorite,
-  visited);
-  }
-
-  if (
-    genre.includes("ビア")
-  ) {
-    return createEmojiIcon("🍺",
-  favorite,
-  visited);
-  }
-
-  if (
-    genre.includes("餃子") ||
-    genre.includes("中華")
-  ) {
-    return createEmojiIcon("🥟",
-  favorite,
-  visited);
-  }
-
-  if (
-    genre.includes("焼き鳥") ||
-    genre.includes("串焼き")
-  ) {
-    return createEmojiIcon("🐔",
-  favorite,
-  visited);
-  }
-
-  if (
-    genre.includes("タイ料理")
-  ) {
-    return createEmojiIcon("🇹🇭",
-  favorite,
-  visited);
-  }
-
-  return createEmojiIcon("🍽️",
-  favorite,
-  visited);
+  return createEmojiIcon(
+    "🍽️",
+    favorite,
+    visited,
+    shop.name,
+    showLabel
+  );
 
 }
 
@@ -723,13 +783,13 @@ function createPopup(shop) {
 
 let favorites =
   JSON.parse(
-    localStorage.getItem("favorites")
+    localStorage.getItem(FAVORITE_KEY)
     || "[]"
   );
 
 let visited =
   JSON.parse(
-    localStorage.getItem("visited")
+    localStorage.getItem(VISITED_KEY)
     || "[]"
   );
 
@@ -773,12 +833,9 @@ function toggleFavorite(
   }
 
   localStorage.setItem(
-    "favorites",
-    JSON.stringify(
-      favorites
-    )
+    FAVORITE_KEY,
+    JSON.stringify(favorites)
   );
-
   const shop =
     window.allShops.find(
       s =>
@@ -832,12 +889,10 @@ function toggleVisited(
 
   }
 
-  localStorage.setItem(
-    "visited",
-    JSON.stringify(
-      visited
-    )
-  );
+    localStorage.setItem(
+      VISITED_KEY,
+      JSON.stringify(visited)
+    );
 
   const shop =
     window.allShops.find(
@@ -931,42 +986,64 @@ function updateSummary() {
 
 function initFilter() {
 
+  const panel =
+    document.getElementById("filterPanel");
+
+  const card =
+    document.getElementById("filterCard");
+
+  const summary =
+    document.getElementById("summary");
+
   const controls =
-    document.getElementById(
-      "controls"
-    );
+    document.getElementById("controls");
 
   const toggleButton =
-    document.getElementById(
-      "toggleFilter"
-    );
-
-  controls.style.display = "none";
-
-  toggleButton.textContent =
-    "☰ フィルタ ▼";
+    document.getElementById("toggleFilter");
 
   let filterOpen = false;
 
-  toggleButton.addEventListener(
-    "click",
-    function () {
+  function closeFilter() {
 
-      filterOpen =
-        !filterOpen;
+    filterOpen = false;
 
-      controls.style.display =
-        filterOpen
-          ? "block"
-          : "none";
+    summary.style.display = "none";
+    controls.style.display = "none";
 
-      toggleButton.textContent =
-        filterOpen
-          ? "☰ フィルタ ▲"
-          : "☰ フィルタ ▼";
+    toggleButton.textContent =
+      "☰ フィルタ ▼";
+
+  }
+
+  // 初期状態：summary + controlsを非表示
+  summary.style.display = "none";
+  controls.style.display = "none";
+
+  toggleButton.textContent = "☰ フィルタ ▼";
+
+  toggleButton.addEventListener("click", function () {
+
+    filterOpen = !filterOpen;
+
+    if (filterOpen) {
+
+      summary.style.display = "block";
+      controls.style.display = "block";
+
+      toggleButton.textContent = "☰ フィルタ ▲";
+
+    } else {
+
+      summary.style.display = "none";
+      controls.style.display = "none";
+
+      toggleButton.textContent = "☰ フィルタ ▼";
 
     }
-  );
+
+  });
+  
+  window.closeFilter = closeFilter;
 
 }
     //----------------------------------
@@ -1298,19 +1375,27 @@ if (
 
 const marker =
   L.marker(
-    [
-      lat,
-      lng
-    ],
+    [lat, lng],
     {
-      icon:
-        getIcon(shop)
+      icon:getIcon(shop)
     }
   )
   .addTo(map)
   .bindPopup(
     createPopup(shop)
   );
+
+
+
+marker.on("click", () => {
+
+  if(window.closeFilter){
+
+    window.closeFilter();
+
+  }
+
+});
 
 markers[
   String(shop.id)
@@ -1337,17 +1422,37 @@ markers[
         }
         
         updateSummary();
+        //----------------------------------
+        // ズーム変更時に店名表示切替
+        //----------------------------------
 
-      })
-      .catch(error => {
+        map.on("zoomend", () => {
 
-        console.error(error);
+          if (!window.allShops) {
+            return;
+          }
 
-        alert(
-          "データ取得に失敗しました"
-        );
+          window.allShops.forEach(shop => {
 
-      });
+            const marker = markers[String(shop.id)];
+
+            if (!marker) return;
+
+            marker.setIcon(getIcon(shop));
+
+          });
+
+        });   // ← map.on終了
+
+        })     // ← ★ then(shops=>{ の終了
+
+        .catch(error => {
+
+          console.error(error);
+
+          alert("データ取得に失敗しました");
+
+        });
 
   </script>
 
