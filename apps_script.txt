@@ -1,0 +1,774 @@
+----------------------------------
+ 列定義
+----------------------------------
+
+const COL = {
+
+  ID 1,
+
+  TABELOG_URL 2,
+
+  NAME 3,
+
+  ADDRESS 4,
+
+  SCORE 5,
+
+  OPEN 6,
+
+  CLOSE 7,
+
+  LAT 8,
+
+  LNG 9,
+
+  GENRE 10,
+
+  SEATS 11,
+
+  MEMO 12,
+
+  UPDATED_AT 13
+
+};
+
+function getSheet(sheetName) {
+
+  const spreadsheet =
+    SpreadsheetApp.getActiveSpreadsheet();
+
+  return spreadsheet.getSheetByName(
+    sheetName
+  );
+
+}
+
+
+
+function getRows() {
+
+  const sheet =
+    getSheet();
+
+  const values =
+    sheet.getDataRange()
+    .getValues();
+
+  Logger.log(values);
+
+}
+
+
+
+function geocodeAddress(address) {
+
+  const result =
+    Maps.newGeocoder()
+      .geocode(address);
+
+  if (
+    result.status !== OK 
+    result.results.length === 0
+  ) {
+    return null;
+  }
+
+  const location =
+    result.results[0].geometry.location;
+
+  return {
+    lat location.lat,
+    lng location.lng
+  };
+
+}
+
+
+function testGeocode() {
+
+  const result =
+    geocodeAddress(
+      東京都杉並区阿佐谷南3-58-1
+    );
+
+  Logger.log(
+    JSON.stringify(result)
+  );
+
+}
+
+function updateLatLngForRow(rowNumber) {
+
+  const sheet =
+    getSheet();
+
+  const address =
+    sheet.getRange(
+      rowNumber,
+      4
+    ).getValue();
+
+  if (!address) {
+    return;
+  }
+
+  const location =
+    geocodeAddress(address);
+
+  if (!location) {
+    return;
+  }
+
+  sheet
+    .getRange(rowNumber, 8)
+    .setValue(location.lat);
+
+  sheet
+    .getRange(rowNumber, 9)
+    .setValue(location.lng);
+
+}
+
+function updateAllLatLng() {
+
+  const sheet =
+    getSheet();
+
+  const lastRow =
+    sheet.getLastRow();
+
+  for (
+    let row = 3;
+    row = lastRow;
+    row++
+  ) {
+
+    updateLatLngForRow(row);
+
+  }
+
+}
+
+
+function getShops(sheetName){
+
+  const sheet =
+    getSheet(sheetName);
+
+  if (!sheet) {
+
+    throw new Error(
+      シートが存在しません  +
+      sheetName
+    );
+
+  }
+
+  const values =
+    sheet.getDataRange()
+    .getValues();
+
+  const headers =
+    values[0];
+
+  const result = [];
+
+  for (
+    let i = 2;
+    i  values.length;
+    i++
+  ) {
+
+    if (!values[i][0]) {
+      continue;
+    }
+
+    const row = {};
+
+    for (
+      let j = 0;
+      j  headers.length;
+      j++
+    ) {
+
+      const key =
+        headers[j];
+
+      let value =
+        values[i][j];
+
+      if (
+        (key === open 
+         key === close) &&
+        value instanceof Date
+      ) {
+
+        value =
+          Utilities.formatDate(
+            value,
+            AsiaTokyo,
+            HHmm
+          );
+
+      }
+
+      row[key] =
+        value;
+
+    }
+
+    result.push(row);
+
+  }
+
+  return result;
+
+}
+
+
+function doGet(e) {
+
+  const mode =
+    e.parameter.mode  shops;
+
+  if (mode === sheets) {
+
+    return ContentService
+      .createTextOutput(
+        JSON.stringify(
+          getSheetNames()
+        )
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
+
+  }
+
+const sheetName =
+  e.parameter.sheet 
+  getDefaultSheet();
+
+  const shops =
+    getShops(sheetName);
+
+  return ContentService
+    .createTextOutput(
+      JSON.stringify(
+        shops,
+        null,
+        2
+      )
+    )
+    .setMimeType(
+      ContentService.MimeType.JSON
+    );
+
+}
+
+function fetchTabelogHtml(url) {
+
+  const response = UrlFetchApp.fetch(
+    url,
+    {
+      muteHttpExceptions true,
+      followRedirects true
+    }
+  );
+
+  return response.getContentText();
+
+}
+
+
+function getShopInfoFromTabelog(url) {
+
+  const html = fetchTabelogHtml(url);
+
+  const match = html.match(
+    script type=applicationld+json([sS])script
+  );
+
+  if (!match) {
+    throw new Error(JSON-LDが見つかりません);
+  }
+
+  const json = JSON.parse(match[1]);
+
+  let hours =
+    extractOpenClose(
+      html,
+      土
+    );
+
+  if (!hours) {
+
+    hours =
+      extractOpenClose(
+        html,
+        火
+      );
+
+  }
+
+  if (!hours) {
+
+    hours = {
+      open ,
+      close 
+    };
+
+  }
+
+  const seats =
+    extractSeats(html);
+
+  return {
+
+    name json.name  ,
+
+    address
+      (json.address.addressRegion  ) +
+      (json.address.addressLocality  ) +
+      (json.address.streetAddress  ),
+
+    score
+      json.aggregateRating.ratingValue  ,
+
+    lat
+      json.geo.latitude  ,
+
+    lng
+      json.geo.longitude  ,
+
+    genre
+      json.servesCuisine  ,
+
+    seats
+      seats,
+
+    open
+      hours.open  ,
+
+    close
+      hours.close  
+
+  };
+
+}
+
+
+function testGetShopInfo() {
+
+  const shop =
+    getShopInfoFromTabelog(
+      httpstabelog.comtokyoA1319A13190513064025
+    );
+
+  Logger.log(
+    JSON.stringify(
+      shop,
+      null,
+      2
+    )
+  );
+
+}
+
+function updateShopMaster() {
+
+  const sheet = getSheet();
+
+  const values =
+    sheet.getDataRange().getValues();
+
+  for (let row = 2; row  values.length; row++) {
+
+    const tabelogUrl = values[row][1];
+    const currentName = values[row][2];
+
+    if (!tabelogUrl) {
+      continue;
+    }
+
+    if (currentName) {
+      continue;
+    }
+
+    try {
+
+      const shop =
+        getShopInfoFromTabelog(
+          tabelogUrl
+        );
+
+    sheet.getRange(
+      row + 1,
+      COL.NAME
+    ).setValue(shop.name);
+
+    sheet.getRange(
+      row + 1,
+      COL.ADDRESS
+    ).setValue(shop.address);
+
+    sheet.getRange(
+      row + 1,
+      COL.SCORE
+    ).setValue(shop.score);
+
+    sheet.getRange(
+      row + 1,
+      COL.LAT
+    ).setValue(shop.lat);
+
+    sheet.getRange(
+      row + 1,
+      COL.LNG
+    ).setValue(shop.lng);
+
+    sheet.getRange(
+      row + 1,
+      COL.GENRE
+    ).setValue(shop.genre);
+
+    sheet.getRange(
+      row + 1,
+      COL.SEATS
+    ).setValue(shop.seats);
+
+    sheet.getRange(
+      row + 1,
+      COL.UPDATED_AT
+    ).setValue(new Date());
+
+      Utilities.sleep(1000);
+
+    } catch (e) {
+
+      Logger.log(
+        失敗  +
+        tabelogUrl
+      );
+
+      Logger.log(e);
+
+    }
+
+  }
+
+}
+
+function testOpeningHours() {
+
+  const html =
+    fetchTabelogHtml(
+      httpstabelog.comtokyoA1319A13190513064025
+    );
+
+  const match = html.match(
+    script type=applicationld+json([sS])script
+  );
+
+  const json = JSON.parse(match[1]);
+
+  Logger.log(
+    JSON.stringify(
+      json,
+      null,
+      2
+    )
+  );
+
+}
+
+
+function onEdit(e) {
+
+  const sheet = e.range.getSheet();
+
+
+  const row = e.range.getRow();
+  const col = e.range.getColumn();
+
+   ヘッダー行は無視
+  if (row = 2) {
+    return;
+  }
+
+   tabelog_url列(B列)以外は無視
+  if (col !== 2) {
+    return;
+  }
+
+  const tabelogUrl =
+    sheet
+      .getRange(
+        row,
+        COL.TABELOG_URL
+      )
+      .getValue();
+
+  if (!tabelogUrl) {
+    return;
+  }
+
+  try {
+
+     id自動採番
+    const idCell =
+      sheet.getRange(
+        row,
+        COL.ID
+      );
+
+    if (!idCell.getValue()) {
+
+      idCell.setValue(
+        getNextId(sheet)
+      );
+
+    }
+
+    const shop =
+      getShopInfoFromTabelog(
+        tabelogUrl
+      );
+
+    sheet.getRange(row, COL.NAME)
+      .setValue(shop.name);
+
+    sheet.getRange(row, COL.ADDRESS)
+      .setValue(shop.address);
+
+    sheet.getRange(row, COL.SCORE)
+      .setValue(shop.score);
+
+    sheet.getRange(row, COL.OPEN)
+      .setValue(shop.open);
+
+    sheet.getRange(row, COL.CLOSE)
+      .setValue(shop.close);
+
+    sheet.getRange(row, COL.LAT)
+      .setValue(shop.lat);
+
+    sheet.getRange(row, COL.LNG)
+      .setValue(shop.lng);
+
+    sheet.getRange(row, COL.GENRE)
+      .setValue(shop.genre);
+
+    sheet.getRange(row, COL.SEATS)
+      .setValue(shop.seats);
+
+    sheet.getRange(row, COL.UPDATED_AT)
+      .setValue(new Date());
+
+  } catch (err) {
+
+    Logger.log(err);
+
+  }
+
+}
+
+
+function getNextId(sheet) {
+
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow = 2) {
+    return 1;
+  }
+
+  const ids = sheet
+    .getRange(3, 1, lastRow - 2, 1)
+    .getValues()
+    .flat()
+    .filter(v = v !== );
+
+  if (ids.length === 0) {
+    return 1;
+  }
+
+  return Math.max(...ids) + 1;
+
+}
+
+
+function getSheetNames() {
+
+  const sheets =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheets();
+
+  return sheets.map(
+    sheet = sheet.getName()
+  );
+
+}
+
+
+function getDefaultSheet() {
+
+  const sheets =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheets();
+
+  return sheets[0].getName();
+
+}
+
+
+function extractOpenClose(
+  html,
+  day
+) {
+
+  const regex =
+    new RegExp(
+      [ + day + ][sS](d{1,2}d{2})s-s(d{1,2}d{2})
+    );
+
+  const match =
+    html.match(regex);
+
+  if (!match) {
+
+    return null;
+
+  }
+
+  return {
+
+    open match[1],
+    close match[2]
+
+  };
+
+}
+
+function extractSeats(html) {
+
+  const match =
+    html.match(
+      席数[sS]{0,150}(d+)s席
+    );
+
+  if (!match) {
+
+    return ;
+
+  }
+
+  return Number(match[1]);
+
+}
+
+function refreshAllShops() {
+
+  const spreadsheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet();
+
+  const sheets =
+    spreadsheet.getSheets();
+
+  sheets.forEach(sheet = {
+
+    const sheetName =
+      sheet.getName();
+
+    Logger.log(
+      開始  + sheetName
+    );
+
+    const lastRow =
+      sheet.getLastRow();
+
+    for (
+      let row = 3;
+      row = lastRow;
+      row++
+    ) {
+
+    const url =
+      sheet
+        .getRange(
+          row,
+          COL.TABELOG_URL
+        )
+        .getValue();
+
+      if (!url) {
+        continue;
+      }
+
+      try {
+
+        const shop =
+          getShopInfoFromTabelog(
+            url
+          );
+
+        sheet.getRange(row, COL.NAME)
+          .setValue(shop.name);
+
+        sheet.getRange(row, COL.ADDRESS)
+          .setValue(shop.address);
+
+        sheet.getRange(row, COL.SCORE)
+          .setValue(shop.score);
+
+        sheet.getRange(row, COL.OPEN)
+          .setValue(shop.open);
+
+        sheet.getRange(row, COL.CLOSE)
+          .setValue(shop.close);
+
+        sheet.getRange(row, COL.LAT)
+          .setValue(shop.lat);
+
+        sheet.getRange(row, COL.LNG)
+          .setValue(shop.lng);
+
+        sheet.getRange(row, COL.GENRE)
+          .setValue(shop.genre);
+
+        sheet.getRange(row, COL.SEATS)
+          .setValue(shop.seats);
+
+        sheet.getRange(row, COL.UPDATED_AT)
+          .setValue(new Date());
+
+        Logger.log(
+          sheetName +
+           row= +
+          row +
+            +
+          shop.name
+        );
+
+        Utilities.sleep(1000);
+
+      } catch(err) {
+
+        Logger.log(
+          sheetName +
+           row= +
+          row +
+           ERROR
+        );
+
+        Logger.log(err);
+
+      }
+
+    }
+
+  });
+
+}
