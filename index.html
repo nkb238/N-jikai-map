@@ -461,6 +461,8 @@ const ICON_RULES = [
 
   { keywords: ["餃子","中華"], emoji: "🥟" },
 
+  { keywords: ["中華"], image: "icons/chagan.jpg" },  
+
   { keywords: ["ラーメン", "つけ麺"], emoji: "🍜" },
 
   { keywords: ["カレー"], emoji: "🍛" },
@@ -489,7 +491,7 @@ const ICON_RULES = [
 
   { keywords: ["うんち", "うんこ","糞","くそ"], emoji: "💩" },
 
-  { keywords: ["げろ", "吐",], emoji: "🤮" }
+  { keywords: ["げろ","ゲロ", "吐",], emoji: "🤮" }
 
 
 ];
@@ -717,9 +719,12 @@ function createImageIcon(
         <img
           src="${image}"
           style="
-            width:30px;
-            height:30px;
-            object-fit:contain;
+          max-width:30px;
+          max-height:30px;
+          width:auto;
+          height:auto;
+          object-fit:contain;
+          display:block;
           "
         >
 
@@ -774,6 +779,18 @@ function getIcon(shop) {
         genre.includes(keyword)
       )
     ) {
+
+if (rule.image) {
+
+      return createImageIcon(
+        rule.image,
+        favorite,
+        visited,
+        shop.name,
+        showLabelW
+      );
+
+    }
 
       return createEmojiIcon(
         rule.emoji,
